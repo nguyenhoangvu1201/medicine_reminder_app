@@ -1,6 +1,7 @@
 import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
 import { Medication } from "./storage";
+import Constants from "expo-constants";
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -28,7 +29,15 @@ export async function registerForPushNotificationsAsync(): Promise<
   }
 
   try {
-    const response = await Notifications.getExpoPushTokenAsync();
+    const projectId = Constants.expoConfig?.extra?.eas?.projectId;
+    if (!projectId) {
+      console.error("No projectId found in app configuration");
+      return null;
+    }
+
+    const response = await Notifications.getExpoPushTokenAsync({
+      projectId: projectId,
+    });
     token = response.data;
 
     if (Platform.OS === "android") {
@@ -71,6 +80,7 @@ export async function scheduleMedicationReminder(
           data: { medicationId: medication.id },
         },
         trigger: {
+          type: "daily",
           hour: hours,
           minute: minutes,
           repeats: true,
